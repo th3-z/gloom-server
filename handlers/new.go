@@ -1,25 +1,38 @@
 package handlers
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"gloom/models"
-	"gloom/storage"
+	"fmt"
+	"net/http"
 
 	"github.com/labstack/echo"
 )
 
-func New(c echo.Context) error {
-	fileData := []byte(c.FormValue("file"))
+type TestModel struct {
+	file []byte
+}
 
-	h := sha256.New()
-	h.Write([]byte(c.RealIP()))
-	uploaderId := hex.EncodeToString(h.Sum(nil))
+func CToGoString(c []byte) string {
+	n := -1
+	for i, b := range c {
+		if b == 0 {
+			break
+		}
+		n = i
+	}
+	return string(c[:n+1])
+}
 
-	paste, err := models.NewPaste(storage.Db, fileData, uploaderId)
-	if err != nil {
-		return err
+// curl -i -X 'POST' -F 'file=@file.x' 'localhost:5001/new'
+func New(c echo.Context) (err error) {
+	fileData, _ := c.FormFile("file")
+
+	test := new(TestModel)
+	if err = c.Bind(test); err != nil {
+		panic(err)
 	}
 
-	return c.Redirect(302, "files/"+paste.Filename)
+	fmt.Println(CToGoString(test.file[:]))
+	fmt.Println(fileData.Filename)
+
+	return c.String(http.StatusOK, "File uploaded\n")
 }

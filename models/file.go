@@ -30,8 +30,8 @@ var filesMaxSize = int64((1000 * 1000 * 1000 * 5) / filesMaxGlobal)
 var filesExpiration = int64(1 * 60 * 60 * 24 * 3)
 
 func deleteFile(db *sql.DB, file *File) {
-	file := filesPath + file.Filename
-	err := os.Remove(file)
+	path := filesPath + file.Filename
+	err := os.Remove(path)
 
 	if err != nil {
 		query := `
