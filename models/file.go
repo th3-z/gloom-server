@@ -1,194 +1,95 @@
 package models
 
-/*import (
-	"crypto/sha256"
+import (
 	"database/sql"
-	"encoding/hex"
-	"errors"
+	"fmt"
 	"gloom/storage"
-	"io/ioutil"
+	"io"
+	"mime/multipart"
 	"os"
 	"time"
 )
 
 type File struct {
-	Id         int
-	UploaderId string
-	Filename   string
-	InsertDate time.Time
+	Id         int64
+	UserId     int64
+	Path       string
+	InsertDate int64
 }
 
-var filesPath = "static/files/"
-
-var filesMaxGlobal = 400
-var filesMaxUploader = 15
-
-// 20Gb / MaxFiles
-var filesMaxSize = int64((1000 * 1000 * 1000 * 20) / filesMaxGlobal)
-
-// 3 Days
-var filesExpiration = int64(1 * 60 * 60 * 24 * 3)
-
-func deleteFile(db *sql.DB, file *File) {
-	path := filesPath + file.Filename
-	err := os.Remove(path)
-
-	if err != nil {
-		query := `
-		DELETE FROM file p
-		WHERE p.id = ?
-	`
-		storage.PreparedExec(db, query, file.Id)
-
-		panic(err)
-	}
-
+func GetUserFiles(db *sql.DB, userId int64) []*File {
 	query := `
-		DELETE FROM file p
-		WHERE p.id = ?
+		SELECT
+			f.id,
+			f.user_id,
+			f.path,
+			f.insert_date
+		FROM
+			file f
+		WHERE
+			f.user_id = ?
+			AND f.deleted_date IS NULL
 	`
-	storage.PreparedExec(db, query, file.Id)
-}
-
-func pruneFiles(db *sql.DB, files []File) {
-	for _, file := range files {
-		age := time.Now().Unix() - file.InsertDate.Unix()
-		if age > filesExpiration {
-			deleteFile(db, &file)
-		}
-	}
-}
-
-func checkLimits(content []byte, uploaderId string) bool {
-	// Length check in bytes is intentional
-	if int64(len(content)) > filesMaxSize {
-		return false
-	}
-
-	files := GetFiles()
-
-	if len(files) > filesMaxGlobal {
-		return false
-	}
-
-	userFiles := 0
-	for _, file := range files {
-		if file.UploaderId == uploaderId {
-			userFiles++
-		}
-	}
-
-	if userFiles > filesMaxUploader {
-		return false
-	}
-
-	return true
-}
-
-func GetFiles() []File {
-	var files []File
 
 	rows := storage.PreparedQuery(
-		storage.Db,
-		"SELECT id, uploader_id, filename, insert_date FROM file",
+		db, query,
+		userId,
 	)
-	defer rows.Close()
 
+	var files []*File
 	for rows.Next() {
 		var file File
-		var timestamp int64
 		err := rows.Scan(
-			&file.Id, &file.UploaderId, &file.Filename, &timestamp,
+			&file.Id, &file.UserId, &file.Path, &file.InsertDate,
 		)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			continue
 		}
 
-		file.InsertDate = time.Unix(timestamp, 0)
-		files = append(files, file)
+		files = append(files, &file)
 	}
 
 	return files
 }
 
-func GetFile(db *sql.DB, fileId int64) *File {
-	query := `
-		SELECT
-			id,
-			uploader_id,
-			filename,
-			insert_date
-		FROM
-			file
-		WHERE
-			id = ?
-	`
-	row := storage.PreparedQueryRow(db, query, fileId)
+func NewFile(db *sql.DB, userId int64, fileHeader *multipart.FileHeader, dstPath string) (*File, error) {
+	src, err := fileHeader.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer src.Close()
 
-	var file File
-	row.Scan(&file.Id, &file.UploaderId, &file.Filename, &file.InsertDate)
-
-	return &file
-}
-
-func SearchFile(db *sql.DB, filename string) *File {
-	query := `
-		SELECT
-			id,
-			uploader_id,
-			filename,
-			insert_date
-		FROM
-			file
-		WHERE
-			filename = ?
-	`
-	row := storage.PreparedQueryRow(db, query, filename)
-
-	var file File
-	row.Scan(&file.Id, &file.UploaderId, &file.Filename, &file.InsertDate)
-
-	return &file
-}
-
-func NewFile(db *sql.DB, content []byte, userId int64) (*File, error) {
-	// Move these outside of the function, into the handler
-	pruneFiles(db, GetFiles())
-
-	if !checkLimits(content, uploaderId) {
-		return nil, errors.New("file limit reached")
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return nil, err
 	}
 
-	h := sha256.New()
-	h.Write(content)
-	filename := hex.EncodeToString(h.Sum(nil))
+	if _, err = io.Copy(dst, src); err != nil {
+		return nil, err
+	}
 
+	insertDate := time.Now().Unix()
 	query := `
-		INSERT INTO file (
-			uploader_id,
-			filename,
+		INSERT INTO file(
+			path,
+			user_id,
 			insert_date
-		) VALUES (
-			?,
-			?,
-			?
-		)
+		) VALUES (?, ?, ?)
 	`
 
 	fileId, err := storage.PreparedExec(
-		db, query, uploaderId, filename, time.Now().Unix(),
+		db, query,
+		dstPath, userId, insertDate,
 	)
 
-	// Hash collided with another file, return the existing one
 	if err != nil {
-		return SearchFile(db, filename), nil
+		return nil, err
 	}
 
-	err = ioutil.WriteFile(filesPath+filename, content, 0644)
-	if err != nil {
-		panic(err)
+	file := File{
+		fileId, userId, dstPath, insertDate,
 	}
 
-	return GetFile(db, fileId), nil
+	return &file, nil
 }
-*/

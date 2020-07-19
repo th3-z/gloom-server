@@ -9,9 +9,9 @@ import (
 
 const userQuery = `
 	INSERT INTO user 
-		(name, password, insert_date)
+		(name, password, admin, insert_date)
 	VALUES
-		(?, ?, ?)
+		(?, ?, ?, ?)
 `
 
 func SeedDb(db *sql.DB) {
@@ -21,7 +21,7 @@ func SeedDb(db *sql.DB) {
 
 	_, err := PreparedExec(
 		db, userQuery,
-		"admin", adminPassword, time.Now().Unix(),
+		"admin", adminPassword, 1, time.Now().Unix(),
 	)
 
 	if err != nil {

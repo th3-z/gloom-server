@@ -9,7 +9,9 @@ import (
 type User struct {
 	Id         int64
 	Name       string
+	Admin      int64
 	InsertDate int64
+	Files      []*File
 }
 
 func LoadUser(db *sql.DB, username string, password string) (*User, error) {
@@ -17,6 +19,7 @@ func LoadUser(db *sql.DB, username string, password string) (*User, error) {
 		SELECT
 			u.id,
 			u.name,
+			u.admin,
 			u.insert_date
 		FROM
 			user u
@@ -32,11 +35,13 @@ func LoadUser(db *sql.DB, username string, password string) (*User, error) {
 	)
 
 	var user User
-	err := row.Scan(&user.Id, &user.Name, &user.InsertDate)
+	err := row.Scan(&user.Id, &user.Name, &user.Admin, &user.InsertDate)
 
 	if err != nil {
 		return nil, errors.New("User doesn't exist")
 	}
+
+	user.Files = GetUserFiles(db, user.Id)
 
 	return &user, nil
 }

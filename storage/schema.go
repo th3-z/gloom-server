@@ -5,6 +5,7 @@ var schema = `
         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         name VARCHAR NOT NULL,
         password VARCHAR NOT NULL,
+        admin INTEGER NOT NULL DEFAULT 0,
         insert_date INTEGER NOT NULL,
         deleted_date INTEGER DEFAULT NULL
     );
