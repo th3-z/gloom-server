@@ -8,6 +8,7 @@ import (
 )
 
 var Db *sql.DB
+var Salt = "76574c3f690298220b7513303d337731" // TODO: Unique salt generation
 
 type Queryer interface {
 	Query(string, ...interface{}) (*sql.Rows, error)

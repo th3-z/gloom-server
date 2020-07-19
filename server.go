@@ -11,7 +11,7 @@ import (
 )
 
 func routes(e *echo.Echo) {
-	e.POST("/new", handlers.New)
+	e.POST("/upload", handlers.Upload)
 
 	e.Static("/standing", "static/standing")
 	e.Static("/transient", "static/transient")

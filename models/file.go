@@ -1,6 +1,6 @@
 package models
 
-import (
+/*import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -20,11 +20,11 @@ type File struct {
 
 var filesPath = "static/files/"
 
-var filesMaxGlobal = 1000
+var filesMaxGlobal = 400
 var filesMaxUploader = 15
 
-// 5Gb / MaxFiles
-var filesMaxSize = int64((1000 * 1000 * 1000 * 5) / filesMaxGlobal)
+// 20Gb / MaxFiles
+var filesMaxSize = int64((1000 * 1000 * 1000 * 20) / filesMaxGlobal)
 
 // 3 Days
 var filesExpiration = int64(1 * 60 * 60 * 24 * 3)
@@ -151,7 +151,7 @@ func SearchFile(db *sql.DB, filename string) *File {
 	return &file
 }
 
-func NewFile(db *sql.DB, content []byte, uploaderId string) (*File, error) {
+func NewFile(db *sql.DB, content []byte, userId int64) (*File, error) {
 	// Move these outside of the function, into the handler
 	pruneFiles(db, GetFiles())
 
@@ -191,3 +191,4 @@ func NewFile(db *sql.DB, content []byte, uploaderId string) (*File, error) {
 
 	return GetFile(db, fileId), nil
 }
+*/
