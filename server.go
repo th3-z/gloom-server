@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 
+	"gloom/config"
 	"gloom/handlers"
 	"gloom/storage"
 )
@@ -20,6 +21,14 @@ func routes(e *echo.Echo) {
 
 func main() {
 	t := time.Now().UTC()
+
+	globalConfig, err := config.FromFile("app.json")
+	if err != nil {
+		panic(err)
+	}
+	config.GlobalConfig = globalConfig
+
+	print(config.GlobalConfig.TransientPath)
 
 	storage.Db = storage.InitDB("storage.db")
 	defer storage.Db.Close()
