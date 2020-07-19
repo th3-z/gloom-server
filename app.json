@@ -1,4 +1,6 @@
 {
     "TransientPath": "/home/the_z/",
-    "TransientPeriod": 300
+    "TransientPeriod": 300,
+    "AdminUser": "admin",
+    "AdminPassword": "admin"
 }

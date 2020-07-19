@@ -13,6 +13,7 @@ type Config struct {
 	StandingPath    string
 	AdminUser       string
 	AdminPassword   string
+	DbPath          string
 }
 
 func FromFile(path string) (*Config, error) {

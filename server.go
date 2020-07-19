@@ -28,8 +28,6 @@ func main() {
 	}
 	config.GlobalConfig = globalConfig
 
-	print(config.GlobalConfig.TransientPath)
-
 	storage.Db = storage.InitDB("storage.db")
 	defer storage.Db.Close()
 	storage.CreateSchema(storage.Db)
